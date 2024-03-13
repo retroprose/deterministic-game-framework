@@ -1,2 +1,8 @@
 SFML-2.6.1
 
+Put include and lib from sfml-2.6.1 inside of the sfml folder
+
+
+// g++ Isrc/include -c coding/*.cpp
+// g++ -m32 *.o -o main -Lsrc/lib -lsfml-graphics -lsfml-window -lsfml-system
+// mingw32-make -f Makefile
