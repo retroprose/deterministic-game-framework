@@ -1,6 +1,25 @@
 
 
 
+
+#include <everything.hpp>
+
+
+
+
+int main()
+{
+
+   
+
+    std::cout << "blah ";
+
+
+}
+
+
+
+/*
 #include <iostream>
 
 #include <test.hpp>
@@ -60,3 +79,4 @@ int main()
 
     return 0;
 }
+*/
