@@ -33,3 +33,4 @@
 
 #Directories
 _sfml_include/
+include/generated/
