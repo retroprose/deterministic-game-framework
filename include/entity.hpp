@@ -2,10 +2,8 @@
 #define ENTITY_HPP
 
 #include<typeinfo>
-#include<sstream>
-#include<fstream>
 
-#include <container.hpp>
+//#include <container.hpp>
 
 
 /*
@@ -15,6 +13,11 @@ class Entity {
 public:
     Entity() { data.raw.value = 0x00000000; }
 	Entity(uint32_t in) { data.raw.value = in; }
+    Entity(uint16_t index, uint16_t generation) {
+        data.tracked.untracked = 0;
+        data.tracked.index = index;
+        data.tracked.generation = generation;
+    }
 
     bool operator< (const Entity& rhs) const { return data.raw.value <  rhs.data.raw.value; }
     bool operator==(const Entity& rhs) const { return data.raw.value == rhs.data.raw.value; }
@@ -52,14 +55,14 @@ public:
         return data.raw.value;
     }
 
-	uint8_t* typePtr() {
+	/*uint8_t* typePtr() {
 		uint8_t* ptr = reinterpret_cast<uint8_t*>(&data.raw.value);
 		return ptr + 3;
-	}
+	}*/
 
 private:
-    template<typename... Ts>
-    friend class State;
+    //template<typename... Ts>
+    //friend class State;
 
     /*
         Normal entities created with the State manager
