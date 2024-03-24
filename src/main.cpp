@@ -9,6 +9,11 @@
 
 
 int main() {
+
+
+    experiment();
+
+
     auto const width = 1920, height = 1080;
     sf::RenderWindow window(sf::VideoMode(width, height), "Transformation");
     window.setFramerateLimit(30);

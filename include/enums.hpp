@@ -3,6 +3,39 @@
 
 #include <cstdint>
 
+struct CpGroup {
+    enum Enum : uint16_t {
+        Body = 0,
+        Animator,
+        Player,       
+        Enemy
+    };
+};
+
+struct CpId {
+    enum Enum : uint16_t {
+        // Body
+        Body_Position = 0,
+        Body_Velocity,
+        Body_Size,
+        
+        // Animator
+        Animator_Frame,
+        Animator_Count,
+
+        // Player
+        Player_Slot,
+        Player_DelayFire,
+        Player_Damage,
+
+        // Enemy
+        Enemy_Direction,
+        Enemy_Counter,
+        Enemy_DelayFire
+    };
+};
+
+
 struct ObjType {
     enum Enum : uint8_t {
         Null = 0,
