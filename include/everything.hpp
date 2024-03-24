@@ -17,54 +17,51 @@
 
 
 
+struct Entity;
+
+
 struct Vector2 {
     int32_t x;
     int32_t y;
 };
 
 struct Animator {
+    Handle<Entity> parent;
     uint16_t frame;
     uint16_t count;
 };
 
 struct Body {
+    Handle<Entity> parent;
     Vector2 position;
     Vector2 velocity;
     Vector2 size;
 };
 
 struct Player {
+    Handle<Entity> parent;
     int8_t slot;
     uint16_t delayFire;
     uint16_t damage;
 };
 
 struct Enemy {
+    Handle<Entity> parent;
     int8_t direction;
     uint8_t counter;
     uint16_t delayFire;
 };
 
+
 struct Entity {
-    Handle body;
-    Handle animator;
-    Handle enemy;
-    Handle player;
+    uint8_t type;
+    Handle<Body> body;
+    Handle<Animator> animator;
+    Handle<Player> player;
+    Handle<Enemy> enemy;
 };
 
 
-
-// your list of node types
-using MyNodeData = NodeData<
-    // entity types
-    Entity,
-
-    // component types
-    Body,
-    Animator,
-    Enemy,
-    Player
->;
 
 
 
