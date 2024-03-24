@@ -3,6 +3,33 @@
 
 #include <cstdint>
 
+struct NodeType {
+    enum Enum : uint16_t {
+        // null node, not sure what I am doing with this!
+        Generic = 0,
+
+        // game entities
+        Entity = 1,
+
+        // component types
+        Body = 2,
+        Animator = 3,
+        Enemy = 4,
+        Player = 5,
+
+        Count = 6
+    };
+};
+
+struct NoFl {
+    enum Enum : uint16_t {
+        None = 0,
+        Allocated = 1 << 0,
+        Active = 1 << 1
+    };
+};
+
+
 struct ObjType {
     enum Enum : uint8_t {
         Null = 0,

@@ -1,112 +1,179 @@
 #ifndef ENTITY_HPP
 #define ENTITY_HPP
 
-#include<typeinfo>
+//#include <typeinfo
+#include <cstdint>
+#include <vector>
+#include <map>
 
-//#include <container.hpp>
 
-
-/*
-    Class that represents an entity, is simply a 32 bit unsigned integer.
-*/
-class Entity {
+class Handle {
 public:
-    Entity() { data.raw.value = 0x00000000; }
-	Entity(uint32_t in) { data.raw.value = in; }
-    Entity(uint16_t index, uint16_t generation) {
-        data.tracked.untracked = 0;
-        data.tracked.index = index;
-        data.tracked.generation = generation;
+    inline Handle() { value.raw = 0; }
+    inline Handle(uint8_t t, uint16_t i, uint16_t g) {
+        value.type = t;
+        value.index = i;
+        value.generation = g;
     }
 
-    bool operator< (const Entity& rhs) const { return data.raw.value <  rhs.data.raw.value; }
-    bool operator==(const Entity& rhs) const { return data.raw.value == rhs.data.raw.value; }
-    bool operator!=(const Entity& rhs) const { return data.raw.value != rhs.data.raw.value; }
+    inline uint16_t type() const { return value.type; }
+    inline uint16_t index() const { return value.index; }
+    inline uint16_t generation() const { return value.generation; }
 
-	bool isNull() const {
-		return data.raw.value == 0x00000000;
-	}
-
-    bool untracked() const {
-        return data.tracked.untracked;
-    }
-
-    uint16_t index() const {
-        assert(data.tracked.untracked == 0);
-        return data.tracked.index;
-    }
-
-    uint16_t generation() const {
-        assert(data.tracked.untracked == 0);
-        return data.tracked.generation;
-    }
-
-    uint16_t type() const {
-        assert(data.tracked.untracked == 1);
-        return data.untracked.type;
-    }
-
-    uint16_t user() const {
-        assert(data.tracked.untracked == 1);
-        return data.untracked.user;
-    }
-
-    uint32_t raw() const {
-        return data.raw.value;
-    }
-
-	/*uint8_t* typePtr() {
-		uint8_t* ptr = reinterpret_cast<uint8_t*>(&data.raw.value);
-		return ptr + 3;
-	}*/
-
-private:
-    //template<typename... Ts>
-    //friend class State;
-
-    /*
-        Normal entities created with the State manager
-    */
-    struct Tracked {
-        uint32_t index : 16;        // index of entity
-        uint32_t generation : 15;   // generation of entity
-        uint32_t untracked : 1;     // should always be zero
-    };
-
-    /*
-        This can be used to make always active entities that don't
-        use up any memory.
-
-        For example, if the untracked bit is set, you can use the type
-        to store a "TILE_TYPE", and use the user data bits to store
-        an x and y value.  This would represent a tile on the map that
-        would always be active.  it would be possible to add components to
-        tiles if I changed the HashMaps to store entire entity
-        values rather than just the index.
-
-        Still experimental.
-    */
-    struct Untracked {
-        uint32_t user : 24;         // user data, can be used any way you want
-        uint32_t type : 7;          // type of entity
-        uint32_t untracked : 1;     // should always be 1
-    };
-
-    struct Raw {
-        uint32_t value;
-    };
-
-    Entity(Tracked in) { data.tracked = in; }
-    Entity(Untracked in) { data.untracked = in; }
+    inline bool isNull() const { return value.raw == 0; }  
 
     union {
-        Tracked tracked;
-        Untracked untracked;
-        Raw raw;
-    } data;
+        struct {
+            uint32_t index : 14;
+            uint32_t generation : 10;
+            uint32_t type : 8;
+        };
+        uint32_t raw;
+    } value;
 
 };
 
+
+template<typename T>
+using twod_vector = std::vector<std::vector<T>>;
+
+template<typename... Ts>
+class NodeData {
+public:
+    static const uint16_t END_OF_LIST = 0;
+    
+    // data types
+    using tuple_type = std::tuple<Ts...>;
+    constexpr static size_t tuple_size = std::tuple_size<tuple_type>::value;
+
+    // type from integer
+    template<uint16_t N>
+    using node_type = typename std::tuple_element<N, tuple_type>::type;
+
+    // tuple of vectors
+    using node_vector_type = std::tuple<std::vector<Ts>...>;
+
+    // tuple of vectors
+    node_vector_type data;
+
+    // head vector
+    std::vector<uint16_t> head;
+
+    // data used for all nodes
+    twod_vector<uint16_t> free;
+    twod_vector<uint16_t> generation;
+    twod_vector<uint8_t> flags;
+    
+    // node links
+    twod_vector<Handle> parent;
+    twod_vector<Handle> firstChild;
+    twod_vector<Handle> prevSib;
+    twod_vector<Handle> nextSib;
+
+    inline void resize_types(size_t size) {
+        head.resize(size);
+        
+        free.resize(size);
+        generation.resize(size);
+        flags.resize(size);
+        
+        parent.resize(size);
+        firstChild.resize(size);
+        prevSib.resize(size);
+        nextSib.resize(size);
+    }
+
+    inline NodeData() {
+        resize_types(tuple_size + 1);
+        // create null node!
+        create<0>();
+    }
+
+    inline size_t type_count() const {
+        return head.size();
+    }
+
+    inline size_t node_count(uint16_t type) const {
+        return free[type].size();
+    }
+
+    inline void resize_nodes(uint16_t type, size_t size) {
+        free[type].resize(size);
+        generation[type].resize(size);
+        flags[type].resize(size);
+
+        parent[type].resize(size);
+        firstChild[type].resize(size);
+        prevSib[type].resize(size);
+        nextSib[type].resize(size);
+    }
+
+
+    inline bool valid(Handle node) {
+        return generation[node.type()][node.index()] == node.generation();
+    }
+
+    template<uint16_t N>
+    inline Handle create() {
+        uint16_t value = head[N];
+        if (value == END_OF_LIST ) {
+            value = node_count(N);
+            resize_nodes(N, value + 1);
+            // zero is for generic nodes that have no data!
+            if constexpr(N > 0)
+                std::get<N-1>(data).resize(value + 1);
+            free[N][value] = END_OF_LIST;
+            flags[N][value] = NoFl::Allocated;
+        } else {
+            head[N] = free[N][value];
+            free[N][value] = END_OF_LIST;
+        }
+        return Handle(N, value, generation[N][value]);
+    }
+
+    // prints every element of a tuple
+    template<size_t I = 0>
+    inline void createHelper(uint16_t type, Handle& node) {
+        if (I == type)
+            node = create<I>();
+        if constexpr(I < tuple_size)
+            createHelper<I+1>(type, node);
+    }
+    
+    inline Handle createDynamic(uint16_t type) {
+        Handle node;
+        createHelper<0>(type, node);
+        return node;
+    }
+
+    inline void destroy(Handle node) {
+        if (!node.isNull()) {
+            ++generation[node.type()][node.index()];
+            flags[node.type()][node.index()] = NoFl::None;
+            free[node.type()][node.index()] = head[node.type()];
+            head[node.type()] = node.index();
+        }
+    }
+
+    // breaks if you try and get generic node data!
+    template<uint16_t N>
+    inline std::vector<node_type<N-1>>& get_data() {
+        return std::get<N-1>(data);
+    }
+
+};
+
+
+template<class U>
+class Reference {
+public:
+    U& data;
+    Handle handle;
+
+
+
+
+};
 
 
 

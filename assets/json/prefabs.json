@@ -1,100 +1,137 @@
 [
     {
-        "Type": "Null"
+        "_type": "Entity",
+        "type": "Null"
     },
     {
-        "Type": "Player",
-        "Body": {
-            "size": {
-                "x": 16,
-                "y": 10
-            }
-        },
-        "Player": {
-            "slot": -1
-        },
-        "Animator": {
-            "frame": "player_ship_0"
-        }
-    },
-    {
-        "Type": "Enemy",
-        "Body": {
-            "size": {
-                "x": 16,
-                "y": 10
-            }
-        },
-        "Enemy": {
-            "direction": 1
-        },
-        "Animator": {
-            "frame": "enemy_00_a"
-        }
-    },
-    {
-        "Type": "Bullet",
-        "Body": {
-            "velocity": {
-                "x": 0,
-                "y": 16
+        "_type": "Entity",
+        "type": "Player",
+        "_children": [
+            {
+                "_type": "Body",
+                "size": {
+                    "x": 16,
+                    "y": 10
+                }
             },
-            "size": {
-                "x": 12,
-                "y": 20
-            }
-        },
-        "Animator": {
-            "frame": "player_shot"
-        }
-    },
-    {
-        "Type": "BadBullet",
-        "Body": {
-            "velocity": {
-                "x": 0,
-                "y": -8
+            {
+                "_type": "Player",
+                "slot": -1
             },
-            "size": {
-                "x": 7,
-                "y": 7
+            {
+                "_type": "Animator",
+                "frame": "player_ship_0"
             }
-        },
-        "Animator": {
-            "frame": "enemy_shot"
-        }
+        ]
     },
     {
-        "Type": "Boom",
-        "Body": {
-            "size": {
-                "x": 14,
-                "y": 14
+        "_type": "Entity",
+        "type": "Enemy",
+        "_children": [
+            {
+                "_type": "Body",
+                "size": {
+                    "x": 16,
+                    "y": 10
+                }
+            },
+            {
+                "_type": "Enemy",
+                "direction": 1
+            },
+            {
+                "_type": "Animator",
+                "frame": "enemy_00_a"
             }
-        },
-        "Animator": {
-            "frame": "enemy_boom_0"
-        }
+        ]
     },
     {
-        "Type": "PlayerBoom",
-        "Body": {
-            "size": {
-                "x": 22,
-                "y": 21
+        "_type": "Entity",
+        "type": "Bullet",
+        "_children": [
+            {
+                "_type": "Body",
+                "velocity": {
+                    "x": 0,
+                    "y": 16
+                },
+                "size": {
+                    "x": 12,
+                    "y": 20
+                }
+            },
+            {
+                "_type": "Animator",
+                "frame": "player_shot"
             }
-        },
-        "Animator": {
-            "frame": "player_boom_0"
-        }
+        ]
     },
     {
-        "Type": "ShotCleaner",
-        "Body": {
-            "size": {
-                "x": 960,
-                "y": 540
+        "_type": "Entity",
+        "type": "BadBullet",
+        "_children": [
+            {
+                "_type": "Body",
+                "velocity": {
+                    "x": 0,
+                    "y": -8
+                },
+                "size": {
+                    "x": 7,
+                    "y": 7
+                }
+            },
+            {
+                "_type": "Animator",
+                "frame": "enemy_shot"
             }
-        }
+        ]
+    },
+    {
+        "_type": "Entity",
+        "type": "Boom",
+        "_children": [
+            {
+                "_type": "Body",
+                "size": {
+                    "x": 14,
+                    "y": 14
+                }
+            },
+            {
+                "_type": "Animator",
+                "frame": "enemy_boom_0"
+            }
+        ]
+    },
+    {
+        "_type": "Entity",
+        "type": "PlayerBoom",
+        "_children": [
+            {
+                "_type": "Body",
+                "size": {
+                    "x": 22,
+                    "y": 21
+                }
+            },
+            {
+                "_type": "Animator",
+                "frame": "player_boom_0"
+            }
+        ]
+    },
+    {
+        "_type": "Entity",
+        "type": "ShotCleaner",
+        "_children": [
+            {
+                "_type": "Body",
+                "size": {
+                    "x": 960,
+                    "y": 540
+                }
+            }
+        ]
     }
 ]
