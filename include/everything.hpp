@@ -63,6 +63,24 @@ struct Entity {
 
 
 
+template<typename T>
+class MemoryPool {
+
+    enum Flags : uint8_t {
+        FlagNone = 0
+        FlagActive = 1 << 0,
+        FlagAllocated = 1 << 1
+    };
+
+    std::vector<uint8_t> flags;
+    std::vector<uint16_t> generation;
+    std::vector<T> data;
+
+    
+
+
+};
+
 
 
 
