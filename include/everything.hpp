@@ -132,14 +132,35 @@ using data_tuple = std::tuple<
 
 
 template<typename T>
+struct VectorTuple;
+
+template<typename... Ts>
+struct VectorTuple<std::tuple<Ts...>> {
+    using type = std::tuple<std::vector<Ts>...>;
+};
+
+
+template<typename T>
 class TestDataClass {
 public:
 
-    template<uint16_t N>
+    // the group tuples
+    template<size_t N>
     using group_tuple = typename std::tuple_element<N, T>::type;
 
-    template<uint16_t N>
-    using vector_tuple = typename std::tuple<   std::vector<group_tuple<N>>...   >;
+    // the vector tuples
+    template<typename T>
+    struct VectorTuple;
+
+    template<typename... Ts>
+    struct VectorTuple<std::tuple<Ts...>> {
+        using type = std::tuple<std::vector<Ts>...>;
+    };
+
+    template<size_t N>
+    using vector_tuple = typename VectorTuple<group_tuple<N>>::type;
+
+    
 
 
 };
