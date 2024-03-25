@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-struct NodeType {
+struct Type {
     enum Enum : uint16_t {
         // null node, not sure what I am doing with this!
         Generic = 0,
