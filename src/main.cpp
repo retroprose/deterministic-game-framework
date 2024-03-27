@@ -13,6 +13,19 @@ int main() {
 
     experiment();
 
+    auto test = TestWorld();
+    test.RegisterGroups( Jsons::get("groups") );
+    Handle handle;
+    for (int i = 0; i < 50; ++i) {
+        handle = test.create(GroupType::Type_Body);
+        auto r = Body_Ref(test, handle);
+
+        r.body.position.x = std::rand() % 1980;
+        r.body.position.y = std::rand() % 1080;
+    }
+
+    
+
 
     auto const width = 1920, height = 1080;
     sf::RenderWindow window(sf::VideoMode(width, height), "Transformation");
@@ -44,6 +57,13 @@ int main() {
             if (event.type == sf::Event::Closed)
                 window.close();
 
+        
+        for (auto it = Body_Iter(test); !it.isEnd(); it.incerment()) {
+            auto r = it.get();
+            r.body.position.x += std::rand()%5-2;
+            r.body.position.y += std::rand()%5-2;            
+        }
+
 
         sf::Vector2f move(0.0f, 0.0f);
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))    {move.y = -1.0f;}
@@ -56,15 +76,15 @@ int main() {
 
         // update rectangle's position
         //rect.move(0, 1);
-        sprite.move(0, 1);
+        //sprite.move(0, 1);
 
         window.setView(view);
 
         window.clear();
 
-        rect.setFillColor(sf::Color::Blue);
+        /*rect.setFillColor(sf::Color::Blue);
         rect.setPosition(sprite.getPosition());
-        window.draw(rect, transform); 
+        window.draw(rect, transform); */
 
         //x 173
         //y 219 -> 293
@@ -72,19 +92,31 @@ int main() {
         //h 10
 
         //sprite.setTextureRect(sf::IntRect(0, 0, sprite.getLocalBounds().getSize().x, sprite.getLocalBounds().getSize().y));
-        sprite.setTextureRect(sf::IntRect(173, 293 - 10, 15, 10));
+        /*sprite.setTextureRect(sf::IntRect(173, 293 - 10, 15, 10));
         sprite.setOrigin(15.0f / 2.0f, 10.0f / 2.0f);
         sprite.setScale(2.f, 2.f);
-        window.draw(sprite); // no transformation applied
+        window.draw(sprite); // no transformation applied*/
 
-        rect.setFillColor(sf::Color::Red);
+        //rect.setFillColor(sf::Color::Red);
         //window.draw(rect, transform); // transformation applied
 
         //sprite.setTextureRect(sf::IntRect(0, sprite.getLocalBounds().getSize().y, sprite.getLocalBounds().getSize().x, -sprite.getLocalBounds().getSize().y));
-        sprite.setTextureRect(sf::IntRect(173, 293 /*- 10*/, 15, -10));
-        sprite.setOrigin(15.0f / 2.0f, 10.0f / 2.0f);
-        sprite.setScale(2.f, 2.f);
-        window.draw(sprite, transform); // transformation applied
+        
+  
+
+        for (auto it = Body_Iter(test); !it.isEnd(); it.incerment()) {
+
+            auto r = it.get();
+
+            sprite.setPosition(r.body.position.x, r.body.position.y);
+            //sprite.setTextureRect(sf::IntRect(173, 293 - 10, 15, -10));
+            sprite.setTextureRect(sf::IntRect(173, 293, 15, -10));
+            sprite.setOrigin(15.0f / 2.0f, 10.0f / 2.0f);
+            sprite.setScale(2.f, 2.f);
+            window.draw(sprite, transform); // transformation applied
+            
+        }
+        
 
         window.display();
     }

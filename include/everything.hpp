@@ -81,7 +81,7 @@ struct Enemy {
 };
 
 
-
+ 
 
 
 class TestWorld {
@@ -91,7 +91,7 @@ public:
     constexpr static uint16_t EndOfList = 0xffff;
     
     struct comp_array {
-        BaseContainer* data[DataCount+1];
+        BaseContainer* data[DataCount + 1];
     };
 
     inline void RegisterGroups(const JsonValue& data) {
@@ -123,7 +123,9 @@ public:
     inline Handle create(uint8_t group) {
         Handle handle;
         if (head[group] == EndOfList) {
+            handle.value.type = group;
             handle.value.index = generation[group].size();
+            handle.value.generation = 0;
             free[group].push_back(EndOfList);
             generation[group].push_back(0);
             // this extends all of the components
@@ -132,12 +134,12 @@ public:
                 list.data[id]->set(handle);
             }
         } else {
+            handle.value.type = group;
             handle.value.index = head[group];   
+            handle.value.generation = generation[group][handle.value.index];
             head[group] = free[group][handle.value.index];
             free[group][handle.value.index] = EndOfList;
         }
-        handle.value.type = group;
-        handle.value.generation = generation[group][handle.value.index];
         return handle;
     }
 
@@ -165,8 +167,8 @@ public:
         return {{
             nullptr,
             &type,
-            &animator,
             &body,
+            &animator,
             &player,
             &enemy
         }};
@@ -177,22 +179,58 @@ public:
 };
 
 
-class TestReference {
+class Body_Ref {
 public:
-
-    inline TestReference(TestWorld& w, Handle h) : 
-        type(w.type[h]),
-        animator(w.animator[h]),
-        body(w.body[h]),
-        player(w.player[h]),
-        enemy(w.enemy[h])
+    inline Body_Ref(TestWorld& w, Handle h) : 
+        body(w.body[h])
     { }
 
-    uint8_t& type;
-    Animator& animator;
     Body& body;
-    Player& player;
-    Enemy& enemy;
+
+};
+
+class Body_Iter {
+public:
+
+    inline Body_Iter(TestWorld& w) : it(w.body.table.begin()), index(0), world(w) {
+        if (!valid()) { incerment(); }
+    }
+
+    VectorMap<Body>::table_type::iterator it;
+    uint16_t index;
+
+    TestWorld& world;
+
+    inline bool valid() const {
+        bool ret = true;
+        if (index >= it->second.size()) 
+            ret = false;
+        if (it->first == 0)
+            ret = false;
+        return ret;
+    }
+
+    inline bool isEnd() const {
+        return it == world.body.table.end();
+    }
+
+    inline void incerment() {
+        do {      
+            ++index;
+            if (index >= it->second.size()) {
+                ++it;
+                index = 0;
+            }
+        } while (!valid() && !isEnd());
+    }
+
+    inline Body_Ref get() {
+        Handle handle;
+        handle.value.index = index;
+        handle.value.type = it->first;
+        handle.value.generation = 0;
+        return Body_Ref(world, handle);
+    }
 
 };
 
@@ -208,36 +246,7 @@ void experiment() {
 
     std::cout << "hello world." << std::endl;
 
-    auto test = TestWorld();
-
-    auto data = Jsons::get("groups");
-
-    test.RegisterGroups(data);
-
-    Handle handle;
-
-    handle = test.create(GroupType::Type_Body_Animator_Player);
-
-    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
-    handle = test.create(GroupType::Type_Body_Animator_Player);
-
-    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
-    handle = test.create(GroupType::Type_Body_Animator_Player);
-
-    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
-    handle = test.create(GroupType::Type_Body_Animator);
-
-    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
-    handle = test.create(GroupType::Type_Body_Animator_Player);
-
-    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
-    handle = test.create(GroupType::Type_Body_Animator_Enemy);
-
-    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
-    handle = test.create(GroupType::Type_Body_Animator_Player);
-
-    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
-
+   
 
 }
 

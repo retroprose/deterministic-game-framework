@@ -1,9 +1,10 @@
 #ifndef ENTITY_HPP
 #define ENTITY_HPP
 
-#include<typeinfo>
+#include <typeinfo>
 
 
+#include <iostream>
 
 /*
     This class simply encapsulates a pointer.  It will assert if
@@ -205,7 +206,7 @@ public:
     }
 
     inline void set(Handle h) {
-       auto pair = table.insert(make_pair(h.type(), std::vector<T>()));
+        auto pair = table.insert(make_pair(h.type(), std::vector<T>()));
         if (h.index() >= pair.first->second.size()) {
             pair.first->second.resize(h.index() + 1);
         }        
@@ -227,6 +228,54 @@ public:
 };
 
 
+template<typename T>
+class VectorVector : public BaseContainer {
+public:
+
+    virtual bool coreHas(Handle h) const { return has(h); }
+    virtual void coreClone(Handle from, Handle to) { clone(from, to); }
+    virtual void coreSet(Handle h) { set(h); }
+
+    using value_type = T;
+
+    using table_type = std::vector<std::vector<T>>;
+
+    table_type table;
+
+    inline T& operator[](Handle h) {
+        assert(h.type() < table.size() && h.index() < table[h.type()].size());
+        return table[h.type()][h.index()];
+    }
+
+    inline void set(Handle h, const T& v) {
+        if (h.type() >= table.size()) {
+            table.resize(h.type());
+        }  
+        if (h.index() >= table[h.type()].size()) {
+            table[h.type()].resize(h.index());
+        }        
+        table[h.type()][h.index()] = v;
+    }
+
+    inline void set(Handle h) {
+        if (h.type() >= table.size()) {
+            table.resize(h.type());
+        }  
+        if (h.index() >= table[h.type()].size()) {
+            table[h.type()].resize(h.index());
+        }        
+        table[h.type()][h.index()] = T();
+    }
+
+    inline bool has(Handle h) const {
+        return !(h.type() >= table.size() || h.index() >= table[h.type()].size());
+    }
+
+    inline void clone(Handle from, Handle to) {
+        (*this)[to] = (*this)[from];
+    }
+
+};
 
 
 
