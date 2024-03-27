@@ -8,81 +8,47 @@
 #include <vector>
 #include <map>
 
-#include<generated/atoms.hpp>
-#include<generated/jsons.hpp>
+#include <generated/atoms.hpp>
+#include <generated/jsons.hpp>
 
-#include<enums.hpp>
+#include <enums.hpp>
 
 #include <entity.hpp>
 
 
 
+/*
 
 
-class EntityManager {
-private:
-    uint16_t _max;
-    uint16_t _active;
-    uint16_t head;
-    std::vector<uint16_t> list;
-    std::vector<uint16_t> _generation;
+using data_type = std::tuple<
+    Ts...,                  // user defined components
+    EmptyHashMap,           // active component -7
+    Vector<VMHash>,         // hashes -6
+    Vector<GenerationInfo>, // generation id -5
+    VectorMap<uint8_t>,     // dynamic comps -4
+    VectorMap<uint16_t>,    // entity -3
+    HashMap<FreeInfo>,      // free hashes -2
+    Single<FreeComp>        // free entities -1
+>;
+constexpr static size_t pack_size = std::tuple_size<data_type>::value; // size of tuple
 
-public:
-    static const uint16_t END_OF_LIST = 0;
 
-    inline EntityManager() : _max(0xffff), _active(0), head(END_OF_LIST) { }
 
-    inline uint16_t active() const {
-        return _active;
-    }
+EmptyHashMap,             // don't need
+Vector<VMHash>,           // entity value now is the vector map hash
+Vector<GenerationInfo>,   // will be needed
+VectorMap<uint8_t>,       // dynamic comps will be optional now
+VectorMap<uint16_t>,      // linked persistent entity now optional
+HashMap<FreeInfo>,        // will be needed
+Single<FreeComp>          // NOT SURE (will actually be merged with above ^)
 
-    inline uint16_t full() const {
-        return _active >= _max;
-    }
 
-    inline uint16_t size() const {
-        return list.size();
-    }
+*/
 
-    inline uint16_t generation(uint16_t value) const {
-        return _generation[value];
-    }
 
-    inline void reset() {
-        _active = 0;
-        head = END_OF_LIST;
-        list.clear();
-        // i removed this because prefabs always are loaded first, and 0 is always null prefab!
-        // don't use the first one so zero can represent null
-        //list.push_back(END_OF_LIST);
-    }
 
-    inline uint16_t allocate() {
-        uint16_t value = head;
-        if (value == END_OF_LIST ) {
-            value = list.size();
-            list.push_back(END_OF_LIST);
-            _generation.push_back(0);
-            ++_active;
-        } else {
-            head = list[value];
-            list[value] = END_OF_LIST;
-            ++_active;
-        }
-        return value;
-    }
 
-    inline void free(uint16_t value) {
-        if (value != END_OF_LIST) {
-            if (list[value] == END_OF_LIST) {
-                ++_generation[value];
-                list[value] = head;
-                head = value;
-                --_active;
-            }
-        }
-    }
-};
+
 
 
 
@@ -115,157 +81,112 @@ struct Enemy {
 };
 
 
-
-struct Components {
-
-    // the free list manager
-    EntityManager manager;
-
-    // user components
-    std::vector<uint16_t> flags;
-    std::vector<uint8_t> type;
-    std::vector<Body> body;
-    std::vector<Player> player;
-    std::vector<Enemy> enemy;
-    std::vector<Animator> animator;
-
-    inline size_t size() const {
-        return flags.size();
-    }
-
-    inline void resize(size_t s) {
-        if (size() < s) {
-            flags.resize(s);
-            type.resize(s);
-            body.resize(s);
-            player.resize(s);
-            enemy.resize(s);
-            animator.resize(s);
-        }
-    }
-
-    inline Entity clone(Entity entity) {
-        return clone(entity.index());
-    }
-
-    inline Entity clone(uint16_t index) {
-        Entity entity;
-        if (!manager.full()) {
-            uint16_t value = manager.allocate();
-            resize(value);
-            
-            flags[value] = flags[index];
-            type[value] = type[index];
-            body[value] = body[index];
-            player[value] = player[index];
-            enemy[value] = enemy[index];
-            animator[value] = animator[index];
-
-            entity = Entity(value, manager.generation(value));
-        }
-        return entity;
-    }
-
-    inline Entity entity_from_index(uint16_t index) const {
-        return Entity(index, manager.generation(index));
-    }
-
-    inline bool valid(Entity entity) const {
-        return !entity.isNull() && entity.generation() == manager.generation(entity.index());
-    }
-
-    inline void destroy(Entity entity) {
-        if (valid(entity)) {
-            flags[entity.index()] = CpFl::None;
-            manager.free(entity.index());
-        }
-    }
-
-    inline Entity create() {
-        Entity entity;
-        uint16_t value = manager.allocate();
-        if (!manager.full()) {
-            resize(value);
-            flags[value] = CpFl::None;
-            entity = Entity(value, manager.generation(value));
-        }
-        return entity;
-    }
-
-};
-
-
-struct Reference {
-
-    Reference(Components& c, uint16_t i) : 
-        entity(c.entity_from_index(i)),
-        flags(c.flags[i]),
-        type(c.type[i]),
-        body(c.body[i]),
-        player(c.player[i]),
-        enemy(c.enemy[i]),
-        animator(c.animator[i])
-    { }
-
-    Entity entity;
-    
-    uint16_t& flags;
-    uint8_t& type;
-    Body& body;
-    Player& player;
-    Enemy& enemy;
-    Animator& animator;
-
+template<typename T, size_t S>
+struct fixed_array {
+    T data[S];
 };
 
 
 
-inline void load_prefabs(Components& c) {
 
-    auto& json = Jsons::get("prefabs");
 
-    uint8_t index = 0;
 
-    for (const auto &p : json.array()) {
 
-        auto entity = c.create();
+class TestWorld {
+public:
 
-        auto r = Reference(c, entity.index());
+    inline void RegisterGroups(const JsonValue& data) {
+        auto groups = data.count();
 
-        // compute flags
-        for (const auto &c : p.object()) {
-            r.flags |= Atoms::get<CpFl::Enum>(c.first);
+        compIds.resize(groups);
+        head.resize(groups);
+        free.resize(groups);
+        generation.resize(groups);
+
+        for (auto&& groupId : data.object()) {
+            auto gid = Atoms::get<uint8_t>("GroupType::" + groupId.first);
+            head[gid] = EndOfList;
+            for (auto&& componentId : groupId.second.array()) {
+                auto cid = Atoms::get<uint16_t>("CpType::" + componentId.value());
+                compIds[gid].push_back(cid);
+            }
+            std::sort(compIds[gid].begin(), compIds[gid].end());
         }
 
-        // type
-        r.type = Atoms::get<ObjType::Enum>("ObjType::" + p["Type"].value());
-
-        // body
-        r.body.position.y = p["Body"]["position"]["y"].value();
-        r.body.position.y = p["Body"]["position"]["y"].value();
-        r.body.velocity.x = p["Body"]["velocity"]["x"].value();
-        r.body.velocity.y = p["Body"]["velocity"]["y"].value();
-        r.body.size.x = p["Body"]["size"]["x"].value();
-        r.body.size.y = p["Body"]["size"]["y"].value();
-
-        // player
-        r.player.slot = p["Player"]["slot"].value();
-        r.player.delayFire = p["Player"]["delayFire"].value();
-        r.player.damage = p["Player"]["damage"].value();
-
-        // enemy
-        r.enemy.counter = p["Enemy"]["counter"].value();
-        r.enemy.delayFire = p["Enemy"]["delayFire"].value();
-        r.enemy.direction = p["Enemy"]["direction"].value();
-
-        // animator
-        r.animator.frame = Atoms::get<ObjType::Enum>("AniFrame::" + p["Animator"]["frame"].value());
-        r.animator.count = p["Animator"]["count"].value();
-
-        ++index;
     }
+
+    constexpr static size_t DataCount = 5;
+    constexpr static uint16_t EndOfList = 0xffff;
+
+    std::vector<std::vector<uint16_t>> compIds; 
+    std::vector<uint16_t> head;
+    std::vector<std::vector<uint16_t>> free;
+    std::vector<std::vector<uint16_t>> generation;
+
+    inline Handle create(uint8_t group) {
+        Handle handle;
+        if (head[group] == EndOfList) {
+            handle.value.index = generation[group].size();
+            free[group].push_back(EndOfList);
+            generation[group].push_back(0);
+            // this extends all of the components
+            auto list = generic();
+            for (auto&& id : compIds[group]) {
+                list.data[id]->set(handle);
+            }
+        } else {
+            handle.value.index = head[group];   
+            head[group] = free[group][handle.value.index];
+        }
+        handle.value.type = group;
+        handle.value.generation = generation[group][handle.value.index];
+        return handle;
+    }
+
+    VectorMap<uint8_t> type;
+    VectorMap<Animator> animator;
+    VectorMap<Body> body;
+    VectorMap<Player> player;
+    VectorMap<Enemy> enemy;
+
+    fixed_array<BaseContainer*, DataCount+1> generic() {
+        return {{
+            nullptr,
+            &type,
+            &animator,
+            &body,
+            &player,
+            &enemy
+        }};
+    }
+
    
+
+};
+
+
+
+
+
+
+
+
+void experiment() {
+
+    std::cout << "hello world." << std::endl;
+
+    auto test = TestWorld();
+
+    auto data = Jsons::get("groups");
+
+    //test.RegisterGroups(data);
+
+    //auto handle = test.create(GroupType::Type_Body_Animator_Player);
+
+    //std::cout << handle.generation() << " " << handle.type() << " " << handle.index() << std::endl;
+
 }
+
 
 
 

@@ -1,6 +1,6 @@
 
 
-
+// C:\msys64\mingw32\bin\gdb.exe
 
 #include <SFML/Graphics.hpp>
 
@@ -9,6 +9,11 @@
 
 
 int main() {
+
+
+    experiment();
+
+
     auto const width = 1920, height = 1080;
     sf::RenderWindow window(sf::VideoMode(width, height), "Transformation");
     window.setFramerateLimit(30);

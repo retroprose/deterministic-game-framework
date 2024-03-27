@@ -1,0 +1,23 @@
+{
+    "Type_Body": [
+        "Type",
+        "Body"
+    ],
+    "Type_Body_Animator": [
+        "Type",
+        "Body",
+        "Animator"
+    ],
+    "Type_Body_Animator_Player": [
+        "Type",
+        "Body",
+        "Animator",
+        "Player"
+    ],
+    "Type_Body_Animator_Enemy": [
+        "Type",
+        "Body",
+        "Animator",
+        "Enemy"
+    ]    
+}

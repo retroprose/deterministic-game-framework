@@ -43,8 +43,9 @@ public class JsonGenerator
         File.WriteAllText($"{OutPath}jsons.hpp", @$"#ifndef GENERATED_JSONS_HPP
 #define GENERATED_JSONS_HPP
 
+#include <cassert>
 
-#include<json/json.hpp>
+#include <json/json.hpp>
 
 
 struct Jsons {{

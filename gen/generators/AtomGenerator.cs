@@ -58,6 +58,7 @@ public class AtomGenerator
         File.WriteAllText($"{OutPath}atoms.hpp", @$"#ifndef GENERATED_ATOMS_HPP
 #define GENERATED_ATOMS_HPP
 
+#include <cassert>
 #include <string>
 #include <map>
 
@@ -69,7 +70,9 @@ struct Atoms {{
         static std::map<std::string, uint32_t> m = {{
 {sw.ToString()}
         }};
-        return static_cast<T>(m[s]);
+        auto it = m.find(s);
+        assert(it != m.end());
+        return static_cast<T>(it->second);
     }}
 }};
 

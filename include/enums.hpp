@@ -3,6 +3,30 @@
 
 #include <cstdint>
 
+
+struct GroupType {
+    enum Enum : uint8_t {
+        None = 0,
+        Type_Body = 1,
+        Type_Body_Animator = 2,
+        Type_Body_Animator_Player = 3,
+        Type_Body_Animator_Enemy = 4,
+        Count = 5
+    };
+};
+
+struct CpType {
+    enum Enum : uint16_t {
+        Null = 0,
+        Type = 1,
+        Body = 2,
+        Animator = 3,
+        Player = 4,
+        Enemy = 5,
+        Count = 6
+    };
+};
+
 struct ObjType {
     enum Enum : uint8_t {
         Null = 0,

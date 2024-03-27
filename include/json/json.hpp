@@ -127,6 +127,15 @@ public:
         return data.type == Null;
     }
 
+    inline size_t count() const {
+        switch (data.type) {
+        case Object:    return map.size();
+        case Array:     return vector.size();
+        case String:    return data.string.size();
+        default:        return 0;
+        };
+    }
+
     inline const map_type& object() const {
         return map;
     }
