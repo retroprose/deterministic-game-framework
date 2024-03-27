@@ -41,7 +41,7 @@ public:
         Uint8
     };
 
-private:
+//private:
     template<typename T>
     struct value_type {
         static const uint8_t id; 
@@ -148,6 +148,10 @@ public:
         return data;
     }
 
+    inline const std::string& str() const {
+        return data.string;
+    }
+
     inline const JsonValue& operator[](size_t index) const {
         if (index < 0 || index >= vector.size()) {
             return globalNull();
@@ -174,12 +178,12 @@ public:
 };
 
 inline JsonValue::JsonValue(std::initializer_list<JsonValue> v) {
-    data.type = Object;
+    data.type = Array;
     vector.insert(vector.end(), v.begin(), v.end());
 }
 
 inline JsonValue::JsonValue(std::initializer_list<JsonKeyValue> v) {
-    data.type = Array;
+    data.type = Object;
     auto iter = v.begin();
     while (iter != v.end()) {
         map.insert(std::make_pair(iter->key, iter->value));

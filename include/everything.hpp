@@ -81,47 +81,44 @@ struct Enemy {
 };
 
 
-template<typename T, size_t S>
-struct fixed_array {
-    T data[S];
-};
-
-
-
-
 
 
 
 class TestWorld {
 public:
 
+    constexpr static size_t DataCount = 5;
+    constexpr static uint16_t EndOfList = 0xffff;
+    
+    struct comp_array {
+        BaseContainer* data[DataCount+1];
+    };
+
     inline void RegisterGroups(const JsonValue& data) {
-        auto groups = data.count();
+        auto groups = data.count() + 1;
 
         compIds.resize(groups);
         head.resize(groups);
         free.resize(groups);
         generation.resize(groups);
 
+        head[0] = EndOfList;
+
         for (auto&& groupId : data.object()) {
             auto gid = Atoms::get<uint8_t>("GroupType::" + groupId.first);
             head[gid] = EndOfList;
             for (auto&& componentId : groupId.second.array()) {
-                auto cid = Atoms::get<uint16_t>("CpType::" + componentId.value());
-                compIds[gid].push_back(cid);
+                auto cid = Atoms::get<uint16_t>("CpType::" + componentId.str());
+                compIds[gid].push_back(cid);               
             }
             std::sort(compIds[gid].begin(), compIds[gid].end());
         }
 
     }
 
-    constexpr static size_t DataCount = 5;
-    constexpr static uint16_t EndOfList = 0xffff;
-
-    std::vector<std::vector<uint16_t>> compIds; 
-    std::vector<uint16_t> head;
-    std::vector<std::vector<uint16_t>> free;
-    std::vector<std::vector<uint16_t>> generation;
+    inline bool valid(Handle handle) {
+        return handle.generation() == generation[handle.type()][handle.index()];
+    }
 
     inline Handle create(uint8_t group) {
         Handle handle;
@@ -137,11 +134,26 @@ public:
         } else {
             handle.value.index = head[group];   
             head[group] = free[group][handle.value.index];
+            free[group][handle.value.index] = EndOfList;
         }
         handle.value.type = group;
         handle.value.generation = generation[group][handle.value.index];
         return handle;
     }
+
+    inline void destroy(Handle handle) {
+        if (valid(handle)) {
+            ++generation[handle.type()][handle.index()];
+            free[handle.type()][handle.index()] = head[handle.type()];
+            head[handle.type()] = handle.index();
+        }
+    }
+
+
+    std::vector<std::vector<uint16_t>> compIds; 
+    std::vector<uint16_t> head;
+    std::vector<std::vector<uint16_t>> free;
+    std::vector<std::vector<uint16_t>> generation;
 
     VectorMap<uint8_t> type;
     VectorMap<Animator> animator;
@@ -149,7 +161,7 @@ public:
     VectorMap<Player> player;
     VectorMap<Enemy> enemy;
 
-    fixed_array<BaseContainer*, DataCount+1> generic() {
+    comp_array generic() {
         return {{
             nullptr,
             &type,
@@ -163,6 +175,27 @@ public:
    
 
 };
+
+
+class TestReference {
+public:
+
+    inline TestReference(TestWorld& w, Handle h) : 
+        type(w.type[h]),
+        animator(w.animator[h]),
+        body(w.body[h]),
+        player(w.player[h]),
+        enemy(w.enemy[h])
+    { }
+
+    uint8_t& type;
+    Animator& animator;
+    Body& body;
+    Player& player;
+    Enemy& enemy;
+
+};
+
 
 
 
@@ -179,11 +212,32 @@ void experiment() {
 
     auto data = Jsons::get("groups");
 
-    //test.RegisterGroups(data);
+    test.RegisterGroups(data);
 
-    //auto handle = test.create(GroupType::Type_Body_Animator_Player);
+    Handle handle;
 
-    //std::cout << handle.generation() << " " << handle.type() << " " << handle.index() << std::endl;
+    handle = test.create(GroupType::Type_Body_Animator_Player);
+
+    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
+    handle = test.create(GroupType::Type_Body_Animator_Player);
+
+    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
+    handle = test.create(GroupType::Type_Body_Animator_Player);
+
+    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
+    handle = test.create(GroupType::Type_Body_Animator);
+
+    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
+    handle = test.create(GroupType::Type_Body_Animator_Player);
+
+    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
+    handle = test.create(GroupType::Type_Body_Animator_Enemy);
+
+    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
+    handle = test.create(GroupType::Type_Body_Animator_Player);
+
+    std::cout << handle.generation() << " " << (uint32_t)handle.type() << " " << handle.index() << std::endl;
+
 
 }
 
